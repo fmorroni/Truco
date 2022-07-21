@@ -63,7 +63,6 @@ class Card {
                 else {
                     return 8;
                 }
-           
             case 7:
                 if (this.suit === Deck.suits[0]) {
                     return 12;
@@ -74,28 +73,20 @@ class Card {
                 else {
                     return 4;
                 }
-            
             case 2:
                 return 9;
-           
             case 3:
                 return 10;
-
             case 4:
                 return 1;
-
             case 5:
                 return 2;
-
             case 6:
                 return 3;
-
             case 10:
                 return 5;
-
             case 11:
                 return 6;
-
             case 12:
                 return 7;
         }
@@ -113,11 +104,16 @@ class Card {
     get cardName() {
         return `${this.number} ${this.suit}`;
     }
+
+    get url() {
+        let number = this.number.toString().length < 2 ? '0' + this.number : this.number;
+        return `./images/${this.suit.toLowerCase()}-${number}.png`;
+    }
 }
 
 class Deck {
     static numbers = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12];
-    static suits = ['Espada', 'Oro', 'Basto', 'Copa'];
+    static suits = ['espada', 'oro', 'basto', 'copa'];
     constructor() {
         this.deck = this.generateDeck();
     }
@@ -142,10 +138,17 @@ class Deck {
                 player.cards.push(this.deck.splice(randInt, 1)[0]);
             }
         }
-        /*console.log('Player 1: ');
-        console.log(players[0].cards);
-        console.log('Player 2: ');
-        console.log(players[1].cards);*/
+    }
+
+    assignCardURLs(players) {
+        for (let player of players) {
+            // Mejor generar los nodes como otra property de player (o en una estructura en Player.cards)
+            // Y agregar esos nodes al HTML con js.
+            let cardNodes = Array.from(document.querySelectorAll(`#${player.id} .card`));
+            for (let card of player.cards) {
+               cardNo 
+            }
+        }
     }
 
     addCard(card) {
@@ -154,7 +157,8 @@ class Deck {
 }
 
 class Player {
-    constructor() {
+    constructor(id) {
+        this.id = id;
         this.cards = [];
         this.totalPoints = 0;
         this.roundPoints = 0;
@@ -235,9 +239,12 @@ class Game {
     }
 
     generatePlayers(numberOfPlayers = 2) {
+        let playerNodes = document.querySelectorAll('.player-container');
         let players = [];
         for (let i = 0; i < numberOfPlayers; i++) {
-            players.push(new Player());
+            let id = `player-${i+1}`;
+            players.push(new Player(id));
+            playerNodes[i].id = id;
         }
         
         return players;
@@ -361,19 +368,5 @@ class Game {
 
     playRound() {
         this.deck.dealCards(this.players);
-        console.clear();
-        for (let [i, player] of this.players.entries()) {
-            console.log(`Player ${i+1}: \n`)
-            player.printCards({printIndexes: false});
-            let options = this.printOptions({envido: true, truco: true, jugarCallado: true, irseAlMaso: true});
-            let selectedOption = prompt('Choose an option:');
-            this.parseOptions(options, selectedOption, i);
-            
-            /*
-            let playedCard = player.useCard(prompt('Which card do you wish to use?'));
-            this.deck.addCard(playedCard);
-            console.log(`Player ${i+1} dropped a: ${playedCard.cardName}`);
-            */
-        }
     }
 }
