@@ -1,3 +1,32 @@
+window.addEventListener('load', event => {
+    let game = new Game();
+    game.generatePlayers();
+    // game.playRound();
+
+    for (let card of document.querySelectorAll('.card')) {
+        card.onclick = (event) => {
+            console.log(event);
+            let body = document.querySelector('body');
+            let bgColorMatch = body.style.backgroundColor.match(/(\d+)\D+(\d+)\D+(\d+)/);
+            let bgColorComps = {r: 255, g: 50, b: 67};
+            if (bgColorMatch) {
+                bgColorComps = {r: bgColorMatch[1], g: bgColorMatch[2], b: bgColorMatch[3]};
+            }
+            
+            console.log(bgColorComps);
+            
+            let newBgColor = {
+                r: Math.floor((bgColorComps.r + bgColorComps.g) / (bgColorComps.b + 1)),
+                g: Math.floor((bgColorComps.g + bgColorComps.b) / (bgColorComps.r + 1)),
+                b: Math.floor((bgColorComps.b + bgColorComps.r) / (bgColorComps.g + 1))};
+        
+            console.log(newBgColor);
+            
+            body.style.backgroundColor = `rgb(${newBgColor.r}, ${newBgColor.g}, ${newBgColor.b})`;
+        };
+    }
+});
+
 function getRandomNumber(min, max) {
     return Math.random()*(max - min) + min;
 }

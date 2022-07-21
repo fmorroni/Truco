@@ -1,0 +1,28 @@
+.container {
+    margin-top: 5rem;
+    display: flex;
+    justify-content: space-around;
+}
+
+.hand {
+    display: flex;
+    gap: 2rem;
+}
+
+.player-name {
+    text-decoration: underline;
+    margin-bottom: 2rem;
+}
+
+.separator {
+    height: inherit;
+    border: solid black .2rem;
+}
+
+.card {
+    width: 10rem;
+}
+
+.card:hover {
+    transform: scale(1.2);
+}
