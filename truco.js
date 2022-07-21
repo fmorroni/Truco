@@ -6,8 +6,7 @@ window.addEventListener('load', event => {
     for (let card of document.querySelectorAll('.card')) {
         card.onclick = (event) => {
             console.log(event);
-            let body = document.querySelector('body');
-            let bgColorMatch = body.style.backgroundColor.match(/(\d+)\D+(\d+)\D+(\d+)/);
+            let bgColorMatch = document.body.style.backgroundColor.match(/(\d+)\D+(\d+)\D+(\d+)/);
             let bgColorComps = {r: 255, g: 50, b: 67};
             if (bgColorMatch) {
                 bgColorComps = {r: bgColorMatch[1], g: bgColorMatch[2], b: bgColorMatch[3]};
@@ -22,7 +21,7 @@ window.addEventListener('load', event => {
         
             console.log(newBgColor);
             
-            body.style.backgroundColor = `rgb(${newBgColor.r}, ${newBgColor.g}, ${newBgColor.b})`;
+            document.body.style.backgroundColor = `rgb(${newBgColor.r}, ${newBgColor.g}, ${newBgColor.b})`;
         };
     }
 });
@@ -109,6 +108,12 @@ class Card {
         let number = this.number.toString().length < 2 ? '0' + this.number : this.number;
         return `./images/${this.suit.toLowerCase()}-${number}.png`;
     }
+
+    get node() {
+        let node = document.createElement('img');
+        node.src = `./images/espada-01.png`;
+        a.node.id = 'img1';        
+    }
 }
 
 class Deck {
@@ -179,9 +184,7 @@ class Player {
                     }                   
                 }
 
-                if (newEnvido > envido) {
-                    envido = newEnvido;
-                }
+                envido = newEnvido > envido ? newEnvido : envido;
             }
         }
         
