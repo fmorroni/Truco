@@ -1,6 +1,9 @@
 window.addEventListener('load', event => {
     let game = new Game();
-    game.addPlayersToHTML();
+    game.addPlayerContainersToHTML();
+    game.playRound();
+    game.players[0].useCard(0);
+    game.addHandsToHTML();
 });
 
 function getRandomNumber(min, max) {
@@ -23,6 +26,7 @@ class Card {
     constructor(number, suit) {
         this.number = number;
         this.suit = suit;
+        this.node = this.createNode();
         // this.valueTruco = this.getValueTruco();
         // this.valueEnvido = this.getValueEnvido();
     }
@@ -86,7 +90,7 @@ class Card {
         return `./images/${this.suit.toLowerCase()}-${number}.png`;
     }
 
-    get node() {
+    createNode() {
         let node = document.createElement('img');
         node.src = this.url;
         node.alt = this.cardName;
@@ -138,6 +142,7 @@ class Player {
         this.totalPoints = 0;
         this.roundPoints = 0;
         this.tieneElQuiero = true;
+        this.playerContainerNode = this.createPlayerContainerNode();
     }
 
     get envido() {
@@ -160,7 +165,7 @@ class Player {
         return envido;
     }
     
-    get node() {
+    createPlayerContainerNode() {
         let playerContainer = document.createElement('div');
         playerContainer.id = this.id;
         playerContainer.classList.add('player-container');
@@ -170,15 +175,18 @@ class Player {
         username.textContent = this.username;
         playerContainer.appendChild(username);
 
+        return playerContainer;
+    }
+
+    get handNode() {
         let hand = document.createElement('div');
         hand.classList.add('hand');
 
         for (let card of this.cards) {
             hand.appendChild(card.node);
-        }
-        playerContainer.appendChild(hand);
+        } 
 
-        return playerContainer;
+        return hand;
     }
 
     printCards({printIndexes = true} = {}) {
@@ -241,18 +249,24 @@ class Game {
         return players;
     }
 
-    addPlayersToHTML() {
+    addPlayerContainersToHTML() {
         let container = document.createElement('div');
         container.classList.add('container');
         let separator = document.createElement('div');
         separator.classList.add('separator');
 
         for (let i = 0; i < this.players.length; i++) {
-            container.appendChild(this.players[i].node);
+            container.appendChild(this.players[i].playerContainerNode);
             if (i < this.players.length - 1) container.appendChild(separator);
         }
 
         document.body.appendChild(container);
+    }
+
+    addHandsToHTML() {
+        for (let player of this.players) {
+            player.playerContainerNode.appendChild(player.handNode);
+        }
     }
 
     printOptions({envido = false,
@@ -373,5 +387,6 @@ class Game {
 
     playRound() {
         this.deck.dealCards(this.players);
+        this.addHandsToHTML();
     }
 }

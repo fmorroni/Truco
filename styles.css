@@ -20,7 +20,8 @@ body {
 
 .separator {
     height: inherit;
-    border: solid black .2rem;
+    width: 0.3rem;
+    background-color: black;
 }
 
 .card {
