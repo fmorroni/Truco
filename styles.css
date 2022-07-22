@@ -2,6 +2,20 @@ body {
     background-color: #8592a9;
 }
 
+button {
+    /* border: none; */
+    border-radius: 0 20%;
+    background-color: #fff6c7;
+    padding: .5rem;
+    margin-inline: .6rem;
+    font-family: 'Press Start 2P', cursive;
+    font-size: .7rem;
+}
+
+button:hover {
+    transform: scale(1.1);
+}
+
 .container {
     margin-top: 5rem;
     display: flex;
@@ -11,6 +25,7 @@ body {
 .hand {
     display: flex;
     gap: 2rem;
+    margin-bottom: 2.5rem;
 }
 
 .username {
@@ -29,5 +44,5 @@ body {
 }
 
 .card:hover {
-    transform: scale(1.2);
+    transform: scale(1.07);
 }
