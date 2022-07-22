@@ -19,6 +19,12 @@ function getRandomInt(min, max) {
     return randInt;
 }
 
+function removeAllChildNodes(parent) {
+    while (parent.firstChild) {
+        parent.removeChild(parent.firstChild);
+    }
+}
+
 class Card {
     constructor(number, suit) {
         this.number = number;
@@ -139,6 +145,8 @@ class Player {
         this.totalPoints = 0;
         this.roundPoints = 0;
         this.tieneElQuiero = true;
+        this.optionsNode = this.createOptionsNode();
+        this.handNode = this.createHandNode();
         this.playerContainerNode = this.createPlayerContainerNode();
     }
 
@@ -171,20 +179,40 @@ class Player {
         username.classList.add('username');
         username.textContent = this.username;
         playerContainer.appendChild(username);
+        
+        playerContainer.appendChild(this.handNode);
+        playerContainer.appendChild(this.optionsNode);
 
         return playerContainer;
     }
 
-    get handNode() {
+    createHandNode() {
         let hand = document.createElement('div');
         hand.classList.add('hand');
 
-        for (let card of this.cards) {
-            hand.appendChild(card.node);
-        } 
-
         return hand;
     }
+
+    createOptionsNode() {
+        let optionsNode = document.createElement('div');
+        optionsNode.classList.add('options');
+
+        return optionsNode;
+    }
+
+    updateHand() {
+        removeAllChildNodes(this.handNode);
+        for (let card of this.cards) {
+            this.handNode.appendChild(card.node);
+        } 
+    }
+
+    // updateOptions(options) {
+    //     removeAllChildNodes(this.optionsNode);
+    //     for (let option of options) {
+    //         this.optionsNode.appendChild(option);
+    //     } 
+    // }
 
     printCards({printIndexes = true} = {}) {
         let cardNames = '';
@@ -246,6 +274,12 @@ class Game {
         return players;
     }
 
+    getPlayerById(id) {
+        for (let player of players) {
+            if (player.id === id) return player;
+        }
+    }
+
     addPlayerContainersToHTML() {
         let container = document.createElement('div');
         container.classList.add('container');
@@ -262,7 +296,7 @@ class Game {
 
     addHandsToHTML() {
         for (let player of this.players) {
-            player.playerContainerNode.appendChild(player.handNode);
+            player.updateHand();
         }
     }
 
@@ -312,41 +346,42 @@ class Game {
     }
 
     setOptions(player, {envido = false,
-        realEnvido = false,
-        faltaEnvido = false,
-        truco = false,
-        retruco = false,
-        valeCuatro = false,
-        jugarCallado = false,
-        quiero = false,
-        noQuiero = false,
-        irseAlMaso = false} = {}) {
+                        realEnvido = false,
+                        faltaEnvido = false,
+                        truco = false,
+                        retruco = false,
+                        valeCuatro = false,
+                        jugarCallado = false,
+                        quiero = false,
+                        noQuiero = false,
+                        irseAlMaso = false} = {}) {
 
-            let options = [];
-            if (envido) options.push(Game.options.envido);
-            if (realEnvido) options.push(Game.options.realEnvido);
-            if (faltaEnvido) options.push(Game.options.faltaEnvido);
-            if (truco) options.push(Game.options.truco);
-            if (retruco) options.push(Game.options.retruco);
-            if (valeCuatro) options.push(Game.options.valeCuatro);
-            if (jugarCallado) options.push(Game.options.jugarCallado);
-            if (quiero) options.push(Game.options.quiero);
-            if (noQuiero) options.push(Game.options.noQuiero);
-            if (irseAlMaso) options.push(Game.options.irseAlMaso);
+        let options = [];
+        if (envido) options.push(Game.options.envido);
+        if (realEnvido) options.push(Game.options.realEnvido);
+        if (faltaEnvido) options.push(Game.options.faltaEnvido);
+        if (truco) options.push(Game.options.truco);
+        if (retruco) options.push(Game.options.retruco);
+        if (valeCuatro) options.push(Game.options.valeCuatro);
+        if (jugarCallado) options.push(Game.options.jugarCallado);
+        if (quiero) options.push(Game.options.quiero);
+        if (noQuiero) options.push(Game.options.noQuiero);
+        if (irseAlMaso) options.push(Game.options.irseAlMaso);
 
-            let optionNodes = document.createDocumentFragment();
-            for (let option of options) {
-                let button = document.createElement('button');
-                button.name = option;
-                button.textContent = option;
-                button.onclick = this.parseOptions(player, option);
+        let optionsNode = document.createDocumentFragment();
+        for (let option of options) {
+            let button = document.createElement('button');
+            button.name = option;
+            button.textContent = option;
+            button.onclick = this.parseOptions(player, option);
 
-                optionNodes.appendChild(button);
-            }
-            player.playerContainerNode.appendChild(optionNodes);
-
-            return options;
+            optionsNode.appendChild(button);
         }
+        removeAllChildNodes(player.optionsNode);
+        player.optionsNode.appendChild(optionsNode);
+
+        return options;
+    }
 
     /* parseOptions(options, selectedOption, playerIndex) {
         switch (options[selectedOption]) {
@@ -358,11 +393,11 @@ class Game {
     parseOptions(player, option) {
         switch (option) {
             case Game.options.envido:
-                return this.envido;
+                return () => this.envido(player);
         }
     }
 
-    envido(playerIndex,
+    /* envido(playerIndex,
            score = {siSeQuiere: 0, siNoSeQuiere: 0},
            envidoCount = {envido: 0, realEnvido: 0, faltaEnvido: 0},
            playerSays = '') {
@@ -422,13 +457,77 @@ class Game {
         }
         console.log((playerIndex + 1)%2, score, envidoCount, playerSays);
         this.envido((playerIndex + 1)%2, score, envidoCount, playerSays);
+    } */
+    envido(player,
+           score = {siSeQuiere: 0, siNoSeQuiere: 0},
+           envidoCount = {envido: 0, realEnvido: 0, faltaEnvido: 0}) {
+
+        // console.clear();
+        // playerSays === '' ? null : console.log(`Player ${(playerIndex + 1)%2 + 1} says: ${playerSays}\n\n`);
+        // console.log(`Player ${playerIndex+1}: \n`)
+        // this.players[playerIndex].printCards({printIndexes: false});
+
+        let options = [];
+        if (envidoCount.faltaEnvido > 0) 
+            options = this.setOptions(player, {quiero: true, noQuiero: true, irseAlMaso: true});
+        else if (envidoCount.realEnvido > 0)
+            options = this.setOptions(player, {faltaEnvido: true, quiero: true, noQuiero: true, irseAlMaso: true});
+        else if (envidoCount.envido > 1)
+            options = this.setOptions(player, {realEnvido: true, faltaEnvido: true, quiero: true, noQuiero: true, irseAlMaso: true});
+        else if (envidoCount.envido > 0)
+            options = this.setOptions(player, {envido: true, realEnvido: true, faltaEnvido: true, quiero: true, noQuiero: true, irseAlMaso: true});
+        else
+            options = this.setOptions(player, {envido: true, realEnvido: true, faltaEnvido: true});
+        console.log(options);
+        return;
+        let selectedOption = prompt('Choose an option:');
+        switch (options[selectedOption]) {
+            case Game.options.envido:
+                playerSays = Game.options.envido;
+                score.siSeQuiere += 2;
+                ++score.siNoSeQuiere;
+                ++envidoCount.envido;
+                break;
+            case Game.options.realEnvido:
+                playerSays = Game.options.realEnvido;
+                score.siSeQuiere += 3;
+                score.siNoSeQuiere < 2 ? ++score.siNoSeQuiere : score.siNoSeQuiere += 3;
+                ++envidoCount.realEnvido;
+                break;
+            case Game.options.faltaEnvido:
+                playerSays = Game.options.faltaEnvido;
+                score.siSeQuiere += 999;
+                score.siNoSeQuiere < 2 ? ++score.siNoSeQuiere : score.siNoSeQuiere += 2;
+                ++envidoCount.faltaEnvido;
+                break;
+            case Game.options.quiero:
+                playerSays = Game.options.quiero;
+                console.log(`Player ${playerIndex+1} says: ${playerSays}`);
+                console.log('Stuff...\n\n');
+                return;
+            case Game.options.noQuiero:
+                playerSays = Game.options.noQuiero;
+                console.log(`Player ${playerIndex+1} says: ${playerSays}`);
+                return;
+            case Game.options.irseAlMaso:
+                playerSays = Game.options.irseAlMaso;
+                console.log(`Player ${playerIndex+1} says: ${playerSays}`);
+                return;
+                
+        }
+        console.log((playerIndex + 1)%2, score, envidoCount, playerSays);
+        this.envido((playerIndex + 1)%2, score, envidoCount, playerSays);
     }
 
     playRound() {
         this.deck.dealCards(this.players);
         this.addHandsToHTML();
-        this.setOptions(this.players[0], {envido: true, truco: true, irseAlMaso: true})
+        this.setOptions(this.players[0], {envido: true, truco: true, irseAlMaso: true});
         this.parseOptions()
+        this.players[0].useCard(1);
+        setTimeout(() => {
+            this.players[0].updateHand();
+        }, 2000);
     }
 
     start() {
