@@ -1,6 +1,6 @@
 window.addEventListener('load', event => {
     let game = new Game();
-    // game.playRound();
+    game.addPlayersToHTML();
 });
 
 function getRandomNumber(min, max) {
@@ -125,17 +125,6 @@ class Deck {
         }
     }
 
-    /* assignCardURLs(players) {
-        for (let player of players) {
-            // Mejor generar los nodes como otra property de player (o en una estructura en Player.cards)
-            // Y agregar esos nodes al HTML con js.
-            let cardNodes = Array.from(document.querySelectorAll(`#${player.id} .card`));
-            for (let card of player.cards) {
-               cardNo 
-            }
-        }
-    } */
-
     addCard(card) {
         this.deck.push(card);
     }
@@ -172,15 +161,6 @@ class Player {
     }
     
     get node() {
-/*         <div id="player1" class="player-container">
-        <h3 class="player-name">Something</h3>
-        <div class="hand">
-            <img class="card hidden" src="./images/backside.png" alt="Carta dada vuelta.">
-            <img class="card hidden" src="./images/backside.png" alt="Carta dada vuelta.">
-            <img class="card hidden" src="./images/backside.png" alt="Carta dada vuelta.">
-        </div>
-    </div>
- */
         let playerContainer = document.createElement('div');
         playerContainer.id = this.id;
         playerContainer.classList.add('player-container');
@@ -246,22 +226,33 @@ class Game {
 
     
     constructor(numberOfPlayers = 2) {
-        this.players = this.generatePlayers(numberOfPlayers);
+        this.players = this.generatePlayers(numberOfPlayers); // Only implemented for two players.
         this.deck = new Deck();
         this.state = {truco: null, envido: null};
     }
 
     generatePlayers(numberOfPlayers = 2) {
-        let playerNodes = document.querySelectorAll('.player-container');
         let players = [];
         for (let i = 0; i < numberOfPlayers; i++) {
             let id = `player-${i+1}`;
             let username = id; //prompt(`${id}'s username: `);
             players.push(new Player(id, username));
-            playerNodes[i].id = id;
         }
-        
         return players;
+    }
+
+    addPlayersToHTML() {
+        let container = document.createElement('div');
+        container.classList.add('container');
+        let separator = document.createElement('div');
+        separator.classList.add('separator');
+
+        for (let i = 0; i < this.players.length; i++) {
+            container.appendChild(this.players[i].node);
+            if (i < this.players.length - 1) container.appendChild(separator);
+        }
+
+        document.body.appendChild(container);
     }
 
     printOptions({envido = false,
