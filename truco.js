@@ -1,29 +1,6 @@
 window.addEventListener('load', event => {
     let game = new Game();
-    game.generatePlayers();
     // game.playRound();
-
-    for (let card of document.querySelectorAll('.card')) {
-        card.onclick = (event) => {
-            console.log(event);
-            let bgColorMatch = document.body.style.backgroundColor.match(/(\d+)\D+(\d+)\D+(\d+)/);
-            let bgColorComps = {r: 255, g: 50, b: 67};
-            if (bgColorMatch) {
-                bgColorComps = {r: bgColorMatch[1], g: bgColorMatch[2], b: bgColorMatch[3]};
-            }
-            
-            console.log(bgColorComps);
-            
-            let newBgColor = {
-                r: Math.floor((bgColorComps.r + bgColorComps.g) / (bgColorComps.b + 1)),
-                g: Math.floor((bgColorComps.g + bgColorComps.b) / (bgColorComps.r + 1)),
-                b: Math.floor((bgColorComps.b + bgColorComps.r) / (bgColorComps.g + 1))};
-        
-            console.log(newBgColor);
-            
-            document.body.style.backgroundColor = `rgb(${newBgColor.r}, ${newBgColor.g}, ${newBgColor.b})`;
-        };
-    }
 });
 
 function getRandomNumber(min, max) {
@@ -111,8 +88,11 @@ class Card {
 
     get node() {
         let node = document.createElement('img');
-        node.src = `./images/espada-01.png`;
-        a.node.id = 'img1';        
+        node.src = this.url;
+        node.alt = this.cardName;
+        node.classList.add('card');
+        node.onclick = event => console.log(event); // Placeholder.
+        return node;
     }
 }
 
@@ -145,7 +125,7 @@ class Deck {
         }
     }
 
-    assignCardURLs(players) {
+    /* assignCardURLs(players) {
         for (let player of players) {
             // Mejor generar los nodes como otra property de player (o en una estructura en Player.cards)
             // Y agregar esos nodes al HTML con js.
@@ -154,7 +134,7 @@ class Deck {
                cardNo 
             }
         }
-    }
+    } */
 
     addCard(card) {
         this.deck.push(card);
@@ -162,8 +142,9 @@ class Deck {
 }
 
 class Player {
-    constructor(id) {
+    constructor(id, username) {
         this.id = id;
+        this.username = username;
         this.cards = [];
         this.totalPoints = 0;
         this.roundPoints = 0;
@@ -183,12 +164,41 @@ class Player {
                         newEnvido = (card.valueEnvido > newEnvido ? card.valueEnvido : newEnvido)
                     }                   
                 }
-
                 envido = newEnvido > envido ? newEnvido : envido;
             }
         }
         
         return envido;
+    }
+    
+    get node() {
+/*         <div id="player1" class="player-container">
+        <h3 class="player-name">Something</h3>
+        <div class="hand">
+            <img class="card hidden" src="./images/backside.png" alt="Carta dada vuelta.">
+            <img class="card hidden" src="./images/backside.png" alt="Carta dada vuelta.">
+            <img class="card hidden" src="./images/backside.png" alt="Carta dada vuelta.">
+        </div>
+    </div>
+ */
+        let playerContainer = document.createElement('div');
+        playerContainer.id = this.id;
+        playerContainer.classList.add('player-container');
+
+        let username = document.createElement('h3');
+        username.classList.add('username');
+        username.textContent = this.username;
+        playerContainer.appendChild(username);
+
+        let hand = document.createElement('div');
+        hand.classList.add('hand');
+
+        for (let card of this.cards) {
+            hand.appendChild(card.node);
+        }
+        playerContainer.appendChild(hand);
+
+        return playerContainer;
     }
 
     printCards({printIndexes = true} = {}) {
@@ -246,7 +256,8 @@ class Game {
         let players = [];
         for (let i = 0; i < numberOfPlayers; i++) {
             let id = `player-${i+1}`;
-            players.push(new Player(id));
+            let username = id; //prompt(`${id}'s username: `);
+            players.push(new Player(id, username));
             playerNodes[i].id = id;
         }
         
