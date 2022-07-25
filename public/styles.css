@@ -1,0 +1,178 @@
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box;
+    font-family: inherit;
+}    
+
+html {
+    border: none;
+    height: 100vh;
+}
+
+body {
+    background-color: #8592a9;
+    min-height: 100vh;
+    margin: auto;
+    font-family: 'Press Start 2P', cursive;
+}
+
+button {
+    /* border: none; */
+    border-radius: 0 20%;
+    background-color: #fff6c7;
+    padding: .5rem;
+    margin-inline: .6rem;
+    font-size: .7rem;
+}
+
+button:hover:not(:disabled) {
+    transform: scale(1.1);
+}
+
+
+/*//////// FORM STYLING ////////*/
+.start-menu {
+    width: fit-content;
+    margin: auto;
+}
+
+.start-menu label {
+    display: block;
+    margin: 0.5rem 0;
+}
+
+.start-menu input[type="radio"] {
+    display: none;
+}
+
+.form-option {
+    margin: 1rem auto;
+    padding: .7rem;
+    width: fit-content;
+}
+
+.form-option:hover {
+    box-shadow:0px 0px 0px 3px rgb(214, 202, 132) inset;
+}
+
+.form-option.selected {
+    box-shadow: 0px 0px 0px 3px #671f1f inset;
+}
+
+input[type="text"] {
+    font-size: .8rem;
+    padding: .5rem;
+}
+
+fieldset {
+    border: none;
+    padding: 2rem 0;
+    border-bottom: 3px solid #3b3b4f;
+}
+
+fieldset fieldset:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+fieldset fieldset:first-of-type {
+    padding-top: 0;
+}
+
+.submitBtn {
+    display: block;
+    width: 60%;
+    margin: 2em auto;
+}
+
+/*//////// GAME STYLING //////////*/
+.container {
+    margin-top: 5rem;
+    display: flex;
+    justify-content: space-around;
+}
+
+.hand {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+}
+
+.username {
+    text-decoration: underline;
+    margin-bottom: 2rem;
+}
+
+.separator {
+    height: inherit;
+    width: 0.3rem;
+    background-color: black;
+}
+
+.card {
+    width: 10rem;
+}
+
+.card:hover {
+    transform: scale(1.07);
+}
+
+.waiting-screen {
+    max-width: fit-content;
+    height: 100vh;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-wrap: wrap;
+    column-gap: 7rem;
+    row-gap: 7rem;
+    align-content: center;
+}
+
+.waiting-message {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 2rem;
+}
+
+.waiting-message h3 {
+    min-width: 100%;
+    text-align: center;
+}
+
+.waiting-dot {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    background-color: black;
+    margin-inline: 1rem;
+}
+
+.connected-players {
+    border: solid black;
+    padding: 1rem;
+    font-size: .8rem;
+    /* min-height: 8rem; */
+}
+
+.connected-players ul {
+    margin: 2rem 2rem;
+}
+
+.connected-players li {
+    margin-top: 1rem;
+    color: rgb(0, 255, 0);
+}
+
+.game-room {
+    font-size: .7rem;
+    text-align: left;
+    margin: 1rem 0 0 1rem;
+    display: inline-block;
+    position: fixed;
+}

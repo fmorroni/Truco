@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <title>Truco</title>
+    <script src="./form.js"></script>
+</head>
+<body>
+    <form class="start-menu" action="truco.html">
+        <fieldset>
+            <label>Username: <input type="text" name="username" required></label>
+        </fieldset>
+        <fieldset>
+            <fieldset>
+                <div id="new-game-1v1" class="form-option">
+                    <legend>New Game 1v1</legend>
+                    <input type="radio" name="gameType" value="new-game-1v1" required/>
+                    <input type="radio" name="playersRequired" value="2" required>
+                </div>
+                <div id="new-game-2v2" class="form-option">
+                    <legend>New Game 2v2</legend>
+                        <input type="radio" name="gameType" value="new-game-2v2" required/>
+                        <input type="radio" name="playersRequired" value="4" required>
+                </div>
+                <div  id="existing-game" class="form-option">
+                    <legend>Existing Game</legend>
+                    <input type="radio" name="gameType" value="existing-game" required/>
+                    <input type="radio" name="playersRequired" value="askServer" required>
+                </div>
+            </fieldset>
+            <fieldset>
+                <label>Game Room: <input id="game-room" type="text" name="gameRoom" required disabled></label>
+            </fieldset>
+          </fieldset>
+        <button class="submitBtn" value="start-game" disabled>Start Game</button>
+    </form>
+</body>
+</html>
