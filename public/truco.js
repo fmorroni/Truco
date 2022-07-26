@@ -38,7 +38,7 @@ function getGameInfo(url) {
 // no necesito importar el módulo.
 // import { io } from '/socket.io-client';
 // const socket = io('http://localhost:3000');
-const socket = io('https://12c8-2800-40-39-1e5d-6104-10db-2c4d-f033.sa.ngrok.io',
+const socket = io('https://ae57-2800-40-39-1e5d-6104-10db-2c4d-f033.sa.ngrok.io',
                   {transports: ['websocket', 'polling', 'flashsocket']});
 
 
@@ -49,14 +49,20 @@ window.addEventListener('load', () => {
         console.log(`Connected to room: ${gameInfo.gameRoom}`);
         if (gameInfo.gameType.match(/new-game/i)) {
             console.log('Emit: new-game');
-            socket.emit('new-game', gameInfo);
-            console.log(gameInfo);
-            createWaitingScreen(gameInfo);
+            socket.emit('new-game', gameInfo, createRoom => {
+                if (createRoom) {
+                    console.log(gameInfo);
+                    createWaitingScreen(gameInfo);
+                } else {
+                    alert(`Room ${gameInfo.gameRoom} already exists, choose another room name`);
+                    window.location.href = '/Truco/public/index.html';
+                }
+            });
         }
         else {
             console.log('Emit: join-game');
-            socket.emit('join-game', gameInfo, (connectedPlayers=null, playersRequired=null) => {
-                if (connectedPlayers && playersRequired) {
+            socket.emit('join-game', gameInfo, (connectedPlayers, playersRequired, joinGame) => {
+                if (joinGame) {
                     gameInfo.connectedPlayers = connectedPlayers;
                     gameInfo.playersRequired = playersRequired;
                     console.log(gameInfo);

@@ -11,12 +11,16 @@ io.on('connection', (socket) => {
         console.log(`User ${socket.username} disconnected, ID: ${socket.id}`);
     })
     
-    socket.on('new-game', (gameInfo) => {
-        console.log(`User ${socket.id}: `, gameInfo);
-        socket.username = gameInfo.username;
-        socket.join(gameInfo.gameRoom);
-        gameRooms[gameInfo.gameRoom] = gameInfo;
-        console.log(gameRooms);
+    socket.on('new-game', (gameInfo, callback) => {
+        if (!gameRooms[gameInfo.gameRoom]) {
+            callback(true);
+            console.log(`User ${socket.id}: `, gameInfo);
+            socket.username = gameInfo.username;
+            socket.join(gameInfo.gameRoom);
+            gameRooms[gameInfo.gameRoom] = gameInfo;
+        } else {
+            callback(false);
+        }
     });
 
     socket.on('join-game', (gameInfo, callback) => {
@@ -29,10 +33,10 @@ io.on('connection', (socket) => {
                 socket.to(gameInfo.gameRoom).emit('user-joined', gameInfo.username);
                 
                 currentRoom.connectedPlayers.push(gameInfo.username);
-                callback(currentRoom.connectedPlayers, currentRoom.playersRequired);
+                callback(currentRoom.connectedPlayers, currentRoom.playersRequired, true);
                 console.log(currentRoom);
             } else {
-                callback(null, null);
+                callback(null, null, false);
             }
         } else {
             callback(null, null);
@@ -51,8 +55,10 @@ io.on('connection', (socket) => {
             gameRooms[room].connectedPlayers.splice(gameRooms[room].connectedPlayers.indexOf(socket.username), 1);
             
             // io.sockets.adapter.rooms.get(roomName).size
-            console.log(socket.adapter.rooms);
-            console.log(io.sockets.adapter.rooms);
+            console.log('Socket.adapter.rooms');
+            console.log(socket.adapter.rooms.get(room));
+            console.log('io.sockets.adapter.rooms');
+            console.log(io.sockets.adapter.rooms.get(room));
 
             // console.log(gameRooms);
         }
@@ -64,7 +70,7 @@ io.on('connection', (socket) => {
     })
 
     socket.on('shutdown-server', () => {
-        let shutdownTime = 5;
+        let shutdownTime = 2;
         io.emit('server-shutdown', `Server will shut-down in ${shutdownTime} seconds`);
         setTimeout(() => {
             io.close();
