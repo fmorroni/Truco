@@ -14,7 +14,7 @@ io.on('connection', (socket) => {
     socket.on('new-game', (gameInfo, callback) => {
         if (!gameRooms[gameInfo.gameRoom]) {
             callback(true);
-            console.log(`User ${socket.id}: `, gameInfo);
+            console.log(`New room created by ${socket.id}: `, gameInfo);
             socket.username = gameInfo.username;
             socket.join(gameInfo.gameRoom);
             gameRooms[gameInfo.gameRoom] = gameInfo;
@@ -27,13 +27,19 @@ io.on('connection', (socket) => {
         let currentRoom = gameRooms[gameInfo.gameRoom];
         if (currentRoom) {
             if (!currentRoom.connectedPlayers.includes(gameInfo.username)) {
-                console.log(`User ${socket.id}: `, gameInfo);
+                console.log(`User ${socket.id} joined room: `, gameInfo);
                 socket.username = gameInfo.username;
                 socket.join(gameInfo.gameRoom);
                 socket.to(gameInfo.gameRoom).emit('user-joined', gameInfo.username);
                 
                 currentRoom.connectedPlayers.push(gameInfo.username);
                 callback(currentRoom.connectedPlayers, currentRoom.playersRequired, true);
+
+                // io.to(currentRoom.gameRoom).emit('server-message', currentRoom);
+                if (currentRoom.connectedPlayers.length === parseInt(currentRoom.playersRequired)) {
+                    let delaySeconds = 5;
+                    io.to(currentRoom.gameRoom).emit('start-game', delaySeconds);
+                }
                 console.log(currentRoom);
             } else {
                 callback(null, null, false);
@@ -48,19 +54,18 @@ io.on('connection', (socket) => {
 
     socket.on('disconnecting', (reason) => {
         let room = Array.from(socket.rooms)[1];
-        console.log(room);
         if (gameRooms[room]) {
             console.log(`${socket.username} left the room ${room}`);
-            socket.to(room).emit('user-left', socket.username);
-            gameRooms[room].connectedPlayers.splice(gameRooms[room].connectedPlayers.indexOf(socket.username), 1);
+            // If it's 1 it means the current client, who is about to disconnect,
+            // is the last client in the room. So delete that room.
+            if (socket.adapter.rooms.get(room).size === 1) {
+                delete gameRooms[room];
+                console.log(`Room ${room} deleted`);
+            } else {
+                socket.to(room).emit('user-left', socket.username);
+                gameRooms[room].connectedPlayers.splice(gameRooms[room].connectedPlayers.indexOf(socket.username), 1);
+            }
             
-            // io.sockets.adapter.rooms.get(roomName).size
-            console.log('Socket.adapter.rooms');
-            console.log(socket.adapter.rooms.get(room));
-            console.log('io.sockets.adapter.rooms');
-            console.log(io.sockets.adapter.rooms.get(room));
-
-            // console.log(gameRooms);
         }
         // console.log(socket.rooms);
     });

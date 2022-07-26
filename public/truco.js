@@ -37,9 +37,12 @@ function getGameInfo(url) {
 // Esto sería necesario si tuviera descargada la socket.io-client library, pero como usé el cnd
 // no necesito importar el módulo.
 // import { io } from '/socket.io-client';
-// const socket = io('http://localhost:3000');
-const socket = io('https://ae57-2800-40-39-1e5d-6104-10db-2c4d-f033.sa.ngrok.io',
+
+const socket = io('http://localhost:3000',
                   {transports: ['websocket', 'polling', 'flashsocket']});
+
+// const socket = io('https://ae57-2800-40-39-1e5d-6104-10db-2c4d-f033.sa.ngrok.io',
+//                   {transports: ['websocket', 'polling', 'flashsocket']});
 
 
 window.addEventListener('load', () => {
@@ -103,6 +106,12 @@ window.addEventListener('load', () => {
         window.location.href = '/Truco/public/index.html';
     });
 
+    socket.on('start-game', delaySeconds => {
+        console.log(`All players connected. Game will start y ${delaySeconds} seconds.`)
+        let waitingMessage 
+    });
+    
+    socket.on('server-message', message => console.log(message));
     // let game = new Game();
     // game.start();
     // let p1 = new Player(1, 'Franco');
