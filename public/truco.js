@@ -92,7 +92,7 @@ window.addEventListener('load', () => {
         connectedPlayersCounter.textContent = parseInt(connectedPlayersCounter.textContent) - 1;
     });
 
-    socket.on('server-down', message => {
+    socket.on('server-shutdown', message => {
         alert(message);
         window.location.href = '/Truco/public/index.html';
     });

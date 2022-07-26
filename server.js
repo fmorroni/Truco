@@ -62,8 +62,12 @@ io.on('connection', (socket) => {
     socket.on('print-gameInfo', (room) => {
         console.log(gameRooms[room]);
     })
-})
 
-io.on('disconnect', () => {
-    io.emit('server-down', 'Server was shut-down');
-});
+    socket.on('shutdown-server', () => {
+        let shutdownTime = 5;
+        io.emit('server-shutdown', `Server will shut-down in ${shutdownTime} seconds`);
+        setTimeout(() => {
+            io.close();
+        }, 1000*shutdownTime);
+    });
+})
