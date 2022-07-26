@@ -38,7 +38,7 @@ function getGameInfo(url) {
 // no necesito importar el módulo.
 // import { io } from '/socket.io-client';
 // const socket = io('http://localhost:3000');
-const socket = io('https://e3e4-2800-40-39-1e5d-6104-10db-2c4d-f033.sa.ngrok.io',
+const socket = io('https://12c8-2800-40-39-1e5d-6104-10db-2c4d-f033.sa.ngrok.io',
                   {transports: ['websocket', 'polling', 'flashsocket']});
 
 
@@ -63,7 +63,7 @@ window.addEventListener('load', () => {
                     createWaitingScreen(gameInfo);
                 } else {
                     alert(`User "${gameInfo.username}" has already join the game.`);
-                    window.location.href = 'http://localhost:5500/Truco/public/index.html';
+                    window.location.href = '/Truco/public/index.html';
                 }
             });
         }
@@ -90,6 +90,11 @@ window.addEventListener('load', () => {
 
         let connectedPlayersCounter = document.getElementById('connected-players-counter');
         connectedPlayersCounter.textContent = parseInt(connectedPlayersCounter.textContent) - 1;
+    });
+
+    socket.on('server-down', message => {
+        alert(message);
+        window.location.href = '/Truco/public/index.html';
     });
 
     // let game = new Game();
