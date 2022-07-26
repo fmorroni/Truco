@@ -37,7 +37,10 @@ function getGameInfo(url) {
 // Esto sería necesario si tuviera descargada la socket.io-client library, pero como usé el cnd
 // no necesito importar el módulo.
 // import { io } from '/socket.io-client';
-const socket = io('http://localhost:3000');
+// const socket = io('http://localhost:3000');
+const socket = io('https://e3e4-2800-40-39-1e5d-6104-10db-2c4d-f033.sa.ngrok.io',
+                  {transports: ['websocket', 'polling', 'flashsocket']});
+
 
 window.addEventListener('load', () => {
     let gameInfo = getGameInfo(window.location.href);
