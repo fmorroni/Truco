@@ -83,6 +83,18 @@ io.on('connection', (socket) => {
     });
 });
 
+function getRandomInt(min, max) {
+    min = Math.floor(min);
+    max = Math.floor(max);
+    randInt = Math.floor(getRandomNumber(min, max + 1));
+    // In case Math.random returns a 1.
+    if (randInt == max + 1) {
+        randInt = max;
+    }
+
+    return randInt;
+}
+
 class Card {
     constructor(number, suit) {
         this.number = number;
@@ -93,6 +105,7 @@ class Card {
 class Deck {
     static numbers = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12];
     static suits = ['espada', 'oro', 'basto', 'copa'];
+
     constructor() {
         this.deck = this.generateDeck();
     }
@@ -108,15 +121,18 @@ class Deck {
         return deck;
     }
 
-    dealCards(players) {
-        for (let player of players) {
-            // player = new Player(); // Comment this line. Just for autocompletion's sake.
+    dealHands(numberOfHands) {
+        let hands = [];
+        for (let i = 0; i < numberOfHands; ++i) {
             let cardsInHand = 3;
-            for (let card = 0; card < cardsInHand; card++) {
+            let hand = [];
+            for (let card = 0; card < cardsInHand; ++card) {
                 randInt = getRandomInt(0, this.deck.length - 1);
-                player.cards.push(this.deck.splice(randInt, 1)[0]);
+                hand.push(this.deck.splice(randInt, 1)[0]);
             }
+            hands.push(hand);
         }
+        return hands;
     }
 
     addCard(card) {

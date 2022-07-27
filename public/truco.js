@@ -2,18 +2,6 @@ function getRandomNumber(min, max) {
     return Math.random() * (max - min) + min;
 }
 
-function getRandomInt(min, max) {
-    min = Math.floor(min);
-    max = Math.floor(max);
-    randInt = Math.floor(getRandomNumber(min, max + 1));
-    // In case Math.random returns a 1.
-    if (randInt == max + 1) {
-        randInt = max;
-    }
-
-    return randInt;
-}
-
 function removeAllChildNodes(parent) {
     while (parent.firstChild) {parent.removeChild(parent.firstChild);}
 }
