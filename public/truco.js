@@ -98,7 +98,7 @@ window.addEventListener('load', () => {
         window.location.href = '/Truco/public/index.html';
     });
 
-    socket.on('start-game', delaySeconds => {
+    socket.on('start-countdown', delaySeconds => {
         console.log(`All players connected. Game will start y ${delaySeconds} seconds.`)
         let waitingMessage = document.querySelector('div.waiting-message');
         waitingMessage.querySelector('h3').textContent = 'All players connected. Starting game in';
@@ -110,7 +110,6 @@ window.addEventListener('load', () => {
 
         let tid = setInterval(() => {
             if (delaySeconds <= 0) {
-                // socket.emit
                 clearInterval(tid);
             } else {
                 countDown.textContent = --delaySeconds;
@@ -118,6 +117,11 @@ window.addEventListener('load', () => {
         }, 1000);
         
     });
+
+    socket.on('start-game', () => {
+        removeAllChildNodes(document.body);
+        const game = new Game(gameInfo.playersRequired);
+    })
     
     socket.on('server-message', message => console.log(message));
     // let game = new Game();
@@ -387,7 +391,6 @@ class Game {
         noQuiero: 'No quiero...',
         irseAlMaso: 'Irse Al Maso'
     };
-
 
     constructor(numberOfPlayers = 2) {
         this.players = this.generatePlayers(numberOfPlayers); // Only implemented for two players.

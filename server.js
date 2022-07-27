@@ -39,7 +39,16 @@ io.on('connection', (socket) => {
                 // io.to(currentRoom.gameRoom).emit('server-message', currentRoom);
                 if (currentRoom.connectedPlayers.length === parseInt(currentRoom.playersRequired)) {
                     let delaySeconds = 5;
-                    io.to(currentRoom.gameRoom).emit('start-game', delaySeconds);
+                    io.to(currentRoom.gameRoom).emit('start-countdown', delaySeconds);
+                    let tid = setInterval(() => {
+                        if (delaySeconds <= 0) {
+                            console.log('timer ended');
+                            io.to(currentRoom.gameRoom).emit('start-game');
+                            clearInterval(tid);
+                        } else {
+                            --delaySeconds;
+                        }
+                    }, 1000);
                 }
                 console.log(currentRoom);
             } else {
