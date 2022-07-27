@@ -120,7 +120,7 @@ window.addEventListener('load', () => {
 
     socket.on('start-game', () => {
         removeAllChildNodes(document.body);
-        const game = new Game(gameInfo.playersRequired);
+        const game = new Game(gameInfo);
     })
     
     socket.on('server-message', message => console.log(message));
@@ -267,9 +267,10 @@ class Card {
 }
 
 class Player {
-    constructor(id, username) {
+    constructor(id, username, team) {
         this.id = id;
         this.username = username;
+        this.team = team;
         this.cards = [];
         this.totalPoints = 0;
         this.roundPoints = 0;
@@ -301,7 +302,7 @@ class Player {
 
     createPlayerContainerNode() {
         let playerContainer = document.createElement('div');
-        playerContainer.id = this.id;
+        playerContainer.id = 'player-' + this.id;
         playerContainer.classList.add('player-container');
 
         let username = document.createElement('h3');
@@ -392,17 +393,19 @@ class Game {
         irseAlMaso: 'Irse Al Maso'
     };
 
-    constructor(numberOfPlayers = 2) {
-        this.players = this.generatePlayers(numberOfPlayers); // Only implemented for two players.
-        this.deck = new Deck();
+    constructor(gameInfo) {
+        this.gameInfo = gameInfo;
+        this.player = new Player(0, gameInfo.username, 0);
+        this.otherPlayers = this.generatePlayers(gameInfo.playersRequired); // Only implemented for two players.
+        // this.deck = new Deck();
         this.state = { truco: null, envido: null };
     }
 
-    generatePlayers(numberOfPlayers = 2) {
+    generatePlayers(numberOfPlayers) {
         let players = [];
         for (let i = 0; i < numberOfPlayers; i++) {
             let id = `player-${i + 1}`;
-            let username = id; //prompt(`${id}'s username: `);
+            let username = this.gameInfo.username;
             players.push(new Player(id, username));
         }
         return players;
