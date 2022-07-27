@@ -19,7 +19,6 @@ function getGameInfo(url) {
         let pair = decodeURIComponent(ele.split('=')).split(',');
         gameInfo[pair[0]] = pair[1];
     });
-    gameInfo.connectedPlayers = [gameInfo.username];
     console.log(gameInfo);
 
     return gameInfo;
@@ -46,6 +45,7 @@ window.addEventListener('load', () => {
             console.log('Emit: new-game');
             socket.emit('new-game', gameInfo, createRoom => {
                 if (createRoom) {
+                    gameInfo.connectedPlayers = [gameInfo.username];
                     console.log(gameInfo);
                     createWaitingScreen(gameInfo);
                 } else {
@@ -110,6 +110,7 @@ window.addEventListener('load', () => {
 
         let tid = setInterval(() => {
             if (delaySeconds <= 0) {
+                // socket.emit
                 clearInterval(tid);
             } else {
                 countDown.textContent = --delaySeconds;

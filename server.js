@@ -14,6 +14,7 @@ io.on('connection', (socket) => {
     socket.on('new-game', (gameInfo, callback) => {
         if (!gameRooms[gameInfo.gameRoom]) {
             callback(true);
+            gameInfo.connectedPlayers = [gameInfo.username];
             console.log(`New room created by ${socket.id}: `, gameInfo);
             socket.username = gameInfo.username;
             socket.join(gameInfo.gameRoom);
