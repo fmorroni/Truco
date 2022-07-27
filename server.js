@@ -81,5 +81,45 @@ io.on('connection', (socket) => {
             io.close();
         }, 1000*shutdownTime);
     });
-})
+});
 
+class Card {
+    constructor(number, suit) {
+        this.number = number;
+        this.suit = suit;
+    }
+}
+
+class Deck {
+    static numbers = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12];
+    static suits = ['espada', 'oro', 'basto', 'copa'];
+    constructor() {
+        this.deck = this.generateDeck();
+    }
+
+    generateDeck() {
+        let deck = [];
+        for (const number of Deck.numbers) {
+            for (const suit of Deck.suits) {
+                deck.push(new Card(number, suit));
+            }
+        }
+
+        return deck;
+    }
+
+    dealCards(players) {
+        for (let player of players) {
+            // player = new Player(); // Comment this line. Just for autocompletion's sake.
+            let cardsInHand = 3;
+            for (let card = 0; card < cardsInHand; card++) {
+                randInt = getRandomInt(0, this.deck.length - 1);
+                player.cards.push(this.deck.splice(randInt, 1)[0]);
+            }
+        }
+    }
+
+    addCard(card) {
+        this.deck.push(card);
+    }
+}
