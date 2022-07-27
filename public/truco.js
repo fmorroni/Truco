@@ -15,9 +15,12 @@ function getRandomInt(min, max) {
 }
 
 function removeAllChildNodes(parent) {
-    while (parent.firstChild) {
-        parent.removeChild(parent.firstChild);
-    }
+    while (parent.firstChild) {parent.removeChild(parent.firstChild);}
+}
+
+function removeAllSiblings(element) {
+    while (element.nextSibling) {element.nextSibling.remove();}
+    while (element.previousSibling) {element.previousSibling.remove();}
 }
 
 function getGameInfo(url) {
@@ -40,6 +43,7 @@ function getGameInfo(url) {
 
 const socket = io('http://localhost:3000',
                   {transports: ['websocket', 'polling', 'flashsocket']});
+// window.socket = socket;
 
 // const socket = io('https://ae57-2800-40-39-1e5d-6104-10db-2c4d-f033.sa.ngrok.io',
 //                   {transports: ['websocket', 'polling', 'flashsocket']});
@@ -108,7 +112,22 @@ window.addEventListener('load', () => {
 
     socket.on('start-game', delaySeconds => {
         console.log(`All players connected. Game will start y ${delaySeconds} seconds.`)
-        let waitingMessage 
+        let waitingMessage = document.querySelector('div.waiting-message');
+        waitingMessage.querySelector('h3').textContent = 'All players connected. Starting game in';
+        removeAllSiblings(waitingMessage.querySelector('h3'));
+        let countDown = document.createElement('p');
+        countDown.classList.add('count-down');
+        countDown.textContent = delaySeconds;
+        waitingMessage.appendChild(countDown);
+
+        let tid = setInterval(() => {
+            if (delaySeconds <= 0) {
+                clearInterval(tid);
+            } else {
+                countDown.textContent = --delaySeconds;
+            }
+        }, 1000);
+        
     });
     
     socket.on('server-message', message => console.log(message));

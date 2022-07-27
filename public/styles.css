@@ -86,38 +86,7 @@ fieldset fieldset:first-of-type {
     margin: 2em auto;
 }
 
-/*//////// GAME STYLING //////////*/
-.container {
-    margin-top: 5rem;
-    display: flex;
-    justify-content: space-around;
-}
-
-.hand {
-    display: flex;
-    gap: 2rem;
-    margin-bottom: 2.5rem;
-}
-
-.username {
-    text-decoration: underline;
-    margin-bottom: 2rem;
-}
-
-.separator {
-    height: inherit;
-    width: 0.3rem;
-    background-color: black;
-}
-
-.card {
-    width: 10rem;
-}
-
-.card:hover {
-    transform: scale(1.07);
-}
-
+/*//////// WAITING SCREEN STYLING //////////*/
 .waiting-screen {
     max-width: fit-content;
     height: 100vh;
@@ -175,4 +144,40 @@ fieldset fieldset:first-of-type {
     margin: 1rem 0 0 1rem;
     display: inline-block;
     position: fixed;
+}
+
+.count-down {
+    font-size: 4rem;
+}
+
+/*//////// GAME STYLING //////////*/
+.container {
+    margin-top: 5rem;
+    display: flex;
+    justify-content: space-around;
+}
+
+.hand {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+}
+
+.username {
+    text-decoration: underline;
+    margin-bottom: 2rem;
+}
+
+.separator {
+    height: inherit;
+    width: 0.3rem;
+    background-color: black;
+}
+
+.card {
+    width: 10rem;
+}
+
+.card:hover {
+    transform: scale(1.07);
 }
