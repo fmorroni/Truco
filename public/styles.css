@@ -135,7 +135,39 @@ fieldset fieldset:first-of-type {
 
 .connected-players li {
     margin-top: 1rem;
-    color: rgb(0, 255, 0);
+    width: fit-content;
+}
+
+.team-0 {
+    list-style-type: disc;
+}
+
+.team-1 {
+    color: green;
+}
+
+.team-1::marker {
+    content: "⊠\2009";
+    font-size: 1.5rem;
+}
+
+.team-2 {
+    color: red;
+}
+
+.team-2::marker {
+    content: "⊞\2009";
+    font-size: 1.5rem;
+}
+
+.local-player.team-0 {
+    border: solid hsl(218deg 17% 30%);
+    border-radius: .6rem;
+    padding: .3rem;
+}
+
+.local-player:hover {
+    cursor: pointer;
 }
 
 .game-room {

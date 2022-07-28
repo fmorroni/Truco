@@ -19,7 +19,8 @@ function getGameInfo(url) {
         let pair = decodeURIComponent(ele.split('=')).split(',');
         gameInfo[pair[0]] = pair[1];
     });
-    console.log(gameInfo);
+    // Start in team 0 aka no team.
+    gameInfo.team = 0;
 
     return gameInfo;
 }
@@ -45,7 +46,8 @@ window.addEventListener('load', () => {
             console.log('Emit: new-game');
             socket.emit('new-game', gameInfo, createRoom => {
                 if (createRoom) {
-                    gameInfo.connectedPlayers = [gameInfo.username];
+                    gameInfo.connectedPlayers = {};
+                    gameInfo.connectedPlayers[gameInfo.username] = gameInfo.team;
                     console.log(gameInfo);
                     createWaitingScreen(gameInfo);
                 } else {
@@ -70,44 +72,55 @@ window.addEventListener('load', () => {
         }
     });
 
-    socket.on('user-joined', remoteUsername => {
-        console.log('User connected: ' + remoteUsername);
-        gameInfo.connectedPlayers.push(remoteUsername);
+    socket.on('user-joined', remoteUser => {
+        console.log('User connected: ' + remoteUser);
+        gameInfo.connectedPlayers[remoteUser] = 0;
         
         let playerList = document.querySelector('.connected-players > ul');
         let player = document.createElement('li');
-        player.id = remoteUsername;
-        player.textContent = remoteUsername;
+        player.id = remoteUser;
+        player.textContent = remoteUser;
         playerList.appendChild(player);
 
         let connectedPlayersCounter = document.getElementById('connected-players-counter');
         connectedPlayersCounter.textContent = parseInt(connectedPlayersCounter.textContent) + 1;
     });
+
+    socket.on('all-players-connected', () => {
+        console.log('All players connected.')
+        let waitingMessage = document.querySelector('div.waiting-message');
+        waitingMessage.querySelector('h3').textContent = 'All players connected, select your team by clicking your username.';
+        removeAllSiblings(waitingMessage.querySelector('h3'));
+    })
     
-    socket.on('user-left', remoteUsername => {
-        console.log('User disconnected: ' + remoteUsername);
-        gameInfo.connectedPlayers.splice(gameInfo.connectedPlayers.indexOf(remoteUsername), 1);
-        document.getElementById(remoteUsername).remove();
+    socket.on('user-left', remoteUser => {
+        console.log('User disconnected: ' + remoteUser);
+        delete gameInfo.connectedPlayers[remoteUser];
+        document.getElementById(remoteUser).remove();
 
         let connectedPlayersCounter = document.getElementById('connected-players-counter');
         connectedPlayersCounter.textContent = parseInt(connectedPlayersCounter.textContent) - 1;
     });
 
-    socket.on('server-shutdown', message => {
-        alert(message);
-        window.location.href = '/Truco/public/index.html';
-    });
+    socket.on('update-teams', (remoteUser, newTeam) => {
+        console.log(`Player ${remoteUser} changed teams to ${newTeam}`);
+        document.getElementById(remoteUser).className = '';
+        document.getElementById(remoteUser).classList.add('team-' + newTeam);
+        gameInfo.connectedPlayers[remoteUser] = newTeam;
+    })
 
-    socket.on('start-countdown', delaySeconds => {
-        console.log(`All players connected. Game will start y ${delaySeconds} seconds.`)
+    socket.on('teams-selected', delaySeconds => {
+        document.getElementById(gameInfo.username).removeEventListener('click', playerTeamChange);
+        document.getElementById(gameInfo.username).classList.remove('local-player');
+        console.log(`Game will start in ${delaySeconds} seconds.`)
         let waitingMessage = document.querySelector('div.waiting-message');
-        waitingMessage.querySelector('h3').textContent = 'All players connected. Starting game in';
+        waitingMessage.querySelector('h3').textContent = 'Teams selected. Starting game in';
         removeAllSiblings(waitingMessage.querySelector('h3'));
         let countDown = document.createElement('p');
         countDown.classList.add('count-down');
         countDown.textContent = delaySeconds;
         waitingMessage.appendChild(countDown);
-
+        
         let tid = setInterval(() => {
             if (delaySeconds <= 0) {
                 clearInterval(tid);
@@ -117,22 +130,34 @@ window.addEventListener('load', () => {
         }, 1000);
         
     });
-
+    
     socket.on('start-game', () => {
         removeAllChildNodes(document.body);
         const game = new Game(gameInfo);
     })
     
+    
     socket.on('server-message', message => console.log(message));
+    socket.on('server-shutdown', message => {
+        alert(message);
+        window.location.href = '/Truco/public/index.html';
+    });
     // let game = new Game();
     // game.start();
     // let p1 = new Player(1, 'Franco');
     // p1.connectToSocket();
 });
 
+function playerTeamChange() {
+    this.classList.remove('team-' + this.team);
+    // Alternate between team 1 and 2.
+    this.team = this.team%2 + 1;
+    this.classList.add('team-' + this.team);
+    socket.emit('team-change', this.room, this.team);
+}
+
 function createWaitingScreen(gameInfo) {
     let container = document.createDocumentFragment();
-
     let gameRoom = document.createElement('p');
     gameRoom.classList.add('game-room');
     gameRoom.textContent = `Game Room: ${gameInfo.gameRoom}`;
@@ -159,16 +184,24 @@ function createWaitingScreen(gameInfo) {
     connectedPlayersMsg.textContent = 'Players connected ';
     let connectedPlayersCounter = document.createElement('span');
     connectedPlayersCounter.id = 'connected-players-counter';
-    connectedPlayersCounter.textContent = gameInfo.connectedPlayers.length;
+    connectedPlayersCounter.textContent = Object.keys(gameInfo.connectedPlayers).length;
     connectedPlayersMsg.appendChild(connectedPlayersCounter);
     connectedPlayersMsg.innerHTML += '/' + gameInfo.playersRequired;
     connectedPlayersBox.appendChild(connectedPlayersMsg);
 
     let playerList = document.createElement('ul');
-    for (let player of gameInfo.connectedPlayers) {
+    for (let username of Object.keys(gameInfo.connectedPlayers)) {
         let playerElement = document.createElement('li');
-        playerElement.id = player;
-        playerElement.textContent = player;
+        playerElement.id = username;
+        playerElement.classList.add('team-' + gameInfo.connectedPlayers[username]);
+        if (username === gameInfo.username) {
+            playerElement.classList.add('local-player');
+            playerElement.team = gameInfo.team;
+            playerElement.room = gameInfo.gameRoom;
+            playerElement.addEventListener('click', playerTeamChange);
+        }
+        playerElement.textContent = username;
+
         playerList.appendChild(playerElement);
         connectedPlayersBox.appendChild(playerList);
     }
