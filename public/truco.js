@@ -59,13 +59,16 @@ window.addEventListener('load', () => {
         else {
             console.log('Emit: join-game');
             socket.emit('join-game', gameInfo, (connectedPlayers, playersRequired, joinGame) => {
-                if (joinGame) {
+                if (joinGame === 'yes') {
                     gameInfo.connectedPlayers = connectedPlayers;
                     gameInfo.playersRequired = playersRequired;
                     console.log(gameInfo);
                     createWaitingScreen(gameInfo);
-                } else {
+                } else if (joinGame === 'repeated-username') {
                     alert(`User "${gameInfo.username}" has already join the game.`);
+                    window.location.href = '/Truco/public/index.html';
+                } else {
+                    alert(`Room ${gameInfo.gameRoom} doesn't exists.`);
                     window.location.href = '/Truco/public/index.html';
                 }
             });
@@ -131,9 +134,11 @@ window.addEventListener('load', () => {
         
     });
     
-    socket.on('start-game', () => {
+    socket.on('start-game', (teams) => {
         removeAllChildNodes(document.body);
+        gameInfo.teams = teams;
         const game = new Game(gameInfo);
+        console.log(gameInfo);
     })
     
     

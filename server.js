@@ -13,7 +13,7 @@ io.on('connection', (socket) => {
     
     socket.on('new-game', (gameInfo, callback) => {
         if (!gameRooms[gameInfo.gameRoom]) {
-            callback(true);
+            callback(createRoom = true);
             gameInfo.connectedPlayers = {};
             gameInfo.connectedPlayers[gameInfo.username] = gameInfo.team;
             console.log(`New room created by ${socket.id}: `, gameInfo);
@@ -22,7 +22,7 @@ io.on('connection', (socket) => {
             socket.join(gameInfo.gameRoom);
             gameRooms[gameInfo.gameRoom] = gameInfo;
         } else {
-            callback(false);
+            callback(createRoom = false);
         }
     });
 
@@ -36,17 +36,17 @@ io.on('connection', (socket) => {
                 socket.to(gameInfo.gameRoom).emit('user-joined', gameInfo.username);
                 
                 currentRoom.connectedPlayers[gameInfo.username] = 0;
-                callback(currentRoom.connectedPlayers, currentRoom.playersRequired, true);
+                callback(currentRoom.connectedPlayers, currentRoom.playersRequired, joinGame='yes');
 
                 if (Object.keys(currentRoom.connectedPlayers).length === parseInt(currentRoom.playersRequired)) {
                     io.to(currentRoom.gameRoom).emit('all-players-connected');
                 }
                 console.log(currentRoom);
             } else {
-                callback(null, null, false);
+                callback(null, null, joinGame='repeated-username');
             }
         } else {
-            callback(null, null);
+            callback(null, null, joinGame='wrong-room');
             // Eso debería ir como con un socket.emit('wrong-room') al client. Y prolly arriba cuando el usuario está
             // en uso también debería ir como emit.
             console.log(`Room ${gameInfo.gameRoom} doesn't exists. Enter an existing room id or create a new game.`)
@@ -88,11 +88,12 @@ io.on('connection', (socket) => {
         if (teamsSelected) {
             let delaySeconds = 5;
             io.to(currentRoom.gameRoom).emit('teams-selected', delaySeconds);
-            let tid = setInterval(() => {
+            io.counterId = setInterval(() => {
                 if (delaySeconds <= 0) {
                     console.log('timer ended');
-                    io.to(currentRoom.gameRoom).emit('start-game');
-                    clearInterval(tid);
+                    io.to(currentRoom.gameRoom).emit('start-game', currentRoom.teams);
+                    currentRoom.deck = new Deck();
+                    clearInterval(io.counterId);
                 } else {
                     --delaySeconds;
                 }
@@ -100,6 +101,10 @@ io.on('connection', (socket) => {
         }
 
         console.log(currentRoom);
+    });
+
+    socket.on('new-round', () => {
+        // deal cards and stuff. Send cards on callback.
     });
 
     socket.on('disconnecting', (reason) => {
@@ -120,6 +125,12 @@ io.on('connection', (socket) => {
                 }
                 delete currentRoom.connectedPlayers[socket.username];
             }
+        }
+
+        // console.log('Counter ID on disconnect: ', io.counterId);
+        if (io.counterId) {
+            clearInterval(io.counterId);
+            // console.log('Interval cleared');
         }
         // console.log(socket.rooms);
     });
