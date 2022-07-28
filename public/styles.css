@@ -223,10 +223,10 @@ fieldset fieldset:first-of-type {
     background-color: black;
 }
 
-.card {
+.card-local, .card-remote {
     width: 10rem;
 }
 
-.card:hover {
+.card-local:hover {
     transform: scale(1.07);
 }

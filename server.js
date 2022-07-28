@@ -5,6 +5,7 @@ const io = new Server(3000, {
     }
 });
 
+// No habría cosas que se vuelven más simples si agrego una property socket.room???
 let gameRooms = {};
 io.on('connection', (socket) => {
     socket.on('disconnect', () => {
@@ -15,10 +16,11 @@ io.on('connection', (socket) => {
         if (!gameRooms[gameInfo.gameRoom]) {
             callback(createRoom = true);
             gameInfo.connectedPlayers = {};
-            gameInfo.connectedPlayers[gameInfo.username] = gameInfo.team;
+            gameInfo.connectedPlayers[gameInfo.username] = 0;
             console.log(`New room created by ${socket.id}: `, gameInfo);
             gameInfo.teams = {};
             socket.username = gameInfo.username;
+            socket.room = gameInfo.gameRoom;
             socket.join(gameInfo.gameRoom);
             gameRooms[gameInfo.gameRoom] = gameInfo;
         } else {
@@ -32,6 +34,7 @@ io.on('connection', (socket) => {
             if (!currentRoom.connectedPlayers.hasOwnProperty(gameInfo.username)) {
                 console.log(`User ${socket.id} joined room: `, gameInfo);
                 socket.username = gameInfo.username;
+                socket.room = gameInfo.gameRoom;
                 socket.join(gameInfo.gameRoom);
                 socket.to(gameInfo.gameRoom).emit('user-joined', gameInfo.username);
                 
@@ -53,10 +56,10 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('team-change', (room, newTeam) => {
-        console.log(`In room ${room}, player ${socket.username} changed teams to ${newTeam}`);
-        socket.to(room).emit('update-teams', socket.username, newTeam);
-        let currentRoom = gameRooms[room];
+    socket.on('team-change', newTeam => {
+        console.log(`In room ${socket.room}, player ${socket.username} changed teams to ${newTeam}`);
+        socket.to(socket.room).emit('update-teams', socket.username, newTeam);
+        let currentRoom = gameRooms[socket.room];
 
         let oldTeamKey = 'team_' + currentRoom.connectedPlayers[socket.username];
         if (currentRoom.teams.hasOwnProperty(oldTeamKey)) {
@@ -86,7 +89,7 @@ io.on('connection', (socket) => {
         }
 
         if (teamsSelected) {
-            let delaySeconds = 5;
+            let delaySeconds = 1;
             io.to(currentRoom.gameRoom).emit('teams-selected', delaySeconds);
             io.counterId = setInterval(() => {
                 if (delaySeconds <= 0) {
@@ -105,6 +108,12 @@ io.on('connection', (socket) => {
 
     socket.on('new-round', () => {
         // deal cards and stuff. Send cards on callback.
+    });
+
+    socket.on('get-hand', callback => {
+        let hand = gameRooms[socket.room].deck.dealHand();
+        console.log(`Hand for ${socket.username}`, hand);
+        callback(hand);
     });
 
     socket.on('disconnecting', (reason) => {
@@ -148,6 +157,10 @@ io.on('connection', (socket) => {
     });
 });
 
+function getRandomNumber(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
 function getRandomInt(min, max) {
     min = Math.floor(min);
     max = Math.floor(max);
@@ -186,7 +199,16 @@ class Deck {
         return deck;
     }
 
-    dealHands(numberOfHands) {
+    dealHand(numberOfCards = 3) {
+        let hand = [];
+        for (let card = 0; card < numberOfCards; ++card) {
+            randInt = getRandomInt(0, this.deck.length - 1);
+            hand.push(this.deck.splice(randInt, 1)[0]);
+        }
+        return hand;
+    }
+
+    dealHands(numberOfHands = 1) {
         let hands = [];
         for (let i = 0; i < numberOfHands; ++i) {
             let cardsInHand = 3;

@@ -1,7 +1,3 @@
-function getRandomNumber(min, max) {
-    return Math.random() * (max - min) + min;
-}
-
 function removeAllChildNodes(parent) {
     while (parent.firstChild) {parent.removeChild(parent.firstChild);}
 }
@@ -19,8 +15,6 @@ function getGameInfo(url) {
         let pair = decodeURIComponent(ele.split('=')).split(',');
         gameInfo[pair[0]] = pair[1];
     });
-    // Start in team 0 aka no team.
-    gameInfo.team = 0;
 
     return gameInfo;
 }
@@ -47,7 +41,7 @@ window.addEventListener('load', () => {
             socket.emit('new-game', gameInfo, createRoom => {
                 if (createRoom) {
                     gameInfo.connectedPlayers = {};
-                    gameInfo.connectedPlayers[gameInfo.username] = gameInfo.team;
+                    gameInfo.connectedPlayers[gameInfo.username] = 0;
                     console.log(gameInfo);
                     createWaitingScreen(gameInfo);
                 } else {
@@ -138,6 +132,9 @@ window.addEventListener('load', () => {
         removeAllChildNodes(document.body);
         gameInfo.teams = teams;
         const game = new Game(gameInfo);
+        console.log('Local player: ', game.player);
+        console.log('Remote players: ', game.otherPlayers);
+        game.start();
         console.log(gameInfo);
     })
     
@@ -158,7 +155,7 @@ function playerTeamChange() {
     // Alternate between team 1 and 2.
     this.team = this.team%2 + 1;
     this.classList.add('team-' + this.team);
-    socket.emit('team-change', this.room, this.team);
+    socket.emit('team-change', this.team);
 }
 
 function createWaitingScreen(gameInfo) {
@@ -201,8 +198,7 @@ function createWaitingScreen(gameInfo) {
         playerElement.classList.add('team-' + gameInfo.connectedPlayers[username]);
         if (username === gameInfo.username) {
             playerElement.classList.add('local-player');
-            playerElement.team = gameInfo.team;
-            playerElement.room = gameInfo.gameRoom;
+            playerElement.team = 0;
             playerElement.addEventListener('click', playerTeamChange);
         }
         playerElement.textContent = username;
@@ -224,6 +220,24 @@ function createWaitingScreen(gameInfo) {
         }
         return x;
     })(), 3 * blinkInterval);
+}
+
+class CardBackside {
+    constructor() {
+        this.node = this.createNode();
+    }
+
+    get url() {
+        return `./images/backside.png`;
+    }
+
+    createNode() {
+        let node = document.createElement('img');
+        node.src = this.url;
+        node.alt = 'Backside of card';
+        node.classList.add('card-remote');
+        return node;
+    }
 }
 
 class Card {
@@ -298,21 +312,21 @@ class Card {
         let node = document.createElement('img');
         node.src = this.url;
         node.alt = this.cardName;
-        node.classList.add('card');
+        node.classList.add('card-local');
         node.onclick = event => console.log(event); // Placeholder.
         return node;
     }
 }
 
 class Player {
-    constructor(id, username, team) {
-        this.id = id;
+    constructor(/* id,  */username/*, team=null */) {
+        // this.id = id;
         this.username = username;
-        this.team = team;
+        // this.team = team;
         this.cards = [];
         this.totalPoints = 0;
         this.roundPoints = 0;
-        this.tieneElQuiero = true;
+        this.tieneElQuiero = false;
         this.optionsNode = this.createOptionsNode();
         this.handNode = this.createHandNode();
         this.playerContainerNode = this.createPlayerContainerNode();
@@ -340,14 +354,13 @@ class Player {
 
     createPlayerContainerNode() {
         let playerContainer = document.createElement('div');
-        playerContainer.id = 'player-' + this.id;
+        playerContainer.id = this.username;
         playerContainer.classList.add('player-container');
 
         let username = document.createElement('h3');
         username.classList.add('username');
         username.textContent = this.username;
         playerContainer.appendChild(username);
-
         playerContainer.appendChild(this.handNode);
         playerContainer.appendChild(this.optionsNode);
 
@@ -375,14 +388,14 @@ class Player {
         }
     }
 
-    // updateOptions(options) {
-    //     removeAllChildNodes(this.optionsNode);
-    //     for (let option of options) {
-    //         this.optionsNode.appendChild(option);
-    //     } 
-    // }
+    /* updateOptions(options) {
+        removeAllChildNodes(this.optionsNode);
+        for (let option of options) {
+            this.optionsNode.appendChild(option);
+        } 
+    } */
 
-    printCards({ printIndexes = true } = {}) {
+    /* printCards({ printIndexes = true } = {}) {
         let cardNames = '';
         let cardIndexes = '';
         let separator = '\t\t'
@@ -406,14 +419,10 @@ class Player {
         printIndexes ?
             console.log('\n'.repeat(padding) + cardNames + '\n' + cardIndexes + '\n'.repeat(padding + 1)) :
             console.log('\n'.repeat(padding) + cardNames + '\n'.repeat(padding + 1));
-    }
+    } */
 
     useCard(cardIndex) {
         return this.cards.splice(cardIndex, 1)[0];
-    }
-
-    connectToSocket() {
-        io.connect('http://localhost:3000');
     }
 }
 
@@ -433,26 +442,38 @@ class Game {
 
     constructor(gameInfo) {
         this.gameInfo = gameInfo;
-        this.player = new Player(0, gameInfo.username, 0);
-        this.otherPlayers = this.generatePlayers(gameInfo.playersRequired); // Only implemented for two players.
+        this.player = new Player(gameInfo.username);
+        // this.teams = this.generateTeams();
+        this.otherPlayers = this.generateOtherPlayers();
         // this.deck = new Deck();
         this.state = { truco: null, envido: null };
     }
 
-    generatePlayers(numberOfPlayers) {
-        let players = [];
-        for (let i = 0; i < numberOfPlayers; i++) {
-            let id = `player-${i + 1}`;
-            let username = this.gameInfo.username;
-            players.push(new Player(id, username));
+    /* generateTeams() {
+        let teams = [];
+        for (let teamKey of this.gameInfo.teams) {
+            let team = this.gameInfo.teams[teamKey];
+            for (let username of team) {
+                if (username === this.player.username) {
+                    team.push(this.player);
+                } else {
+                    team.push(new Player(username));
+                }
+            }
+            teams.push(team);
         }
-        return players;
-    }
 
-    getPlayerById(id) {
-        for (let player of players) {
-            if (player.id === id) return player;
+        return teams;
+    } */
+
+    generateOtherPlayers() {
+        let otherPlayers = [];
+        for (let username of Object.keys(this.gameInfo.connectedPlayers)) {
+            if (username !== this.player.username) {
+                otherPlayers.push(new Player(username));
+            }
         }
+        return otherPlayers;
     }
 
     addPlayerContainersToHTML() {
@@ -461,21 +482,26 @@ class Game {
         let separator = document.createElement('div');
         separator.classList.add('separator');
 
-        for (let i = 0; i < this.players.length; i++) {
-            container.appendChild(this.players[i].playerContainerNode);
-            if (i < this.players.length - 1) container.appendChild(separator);
+        container.appendChild(this.player.playerContainerNode);
+        for (let player of this.otherPlayers) {
+            container.appendChild(player.playerContainerNode);
         }
+        // for (let i = 0; i < this.otherPlayers.length; i++) {
+        //     container.appendChild(this.players[i].playerContainerNode);
+        //     if (i < this.players.length - 1) container.appendChild(separator);
+        // }
 
         document.body.appendChild(container);
     }
 
     addHandsToHTML() {
-        for (let player of this.players) {
+        this.player.updateHand();
+        for (let player of this.otherPlayers) {
             player.updateHand();
         }
     }
 
-    printOptions({ envido = false,
+    /* printOptions({ envido = false,
         realEnvido = false,
         faltaEnvido = false,
         truco = false,
@@ -518,7 +544,7 @@ class Game {
         console.log('\n'.repeat(padding) + optString + '\n' + optionIndexes + '\n'.repeat(padding + 1));
 
         return options;
-    }
+    } */
 
     setOptions(player, { envido = false,
         realEnvido = false,
@@ -695,14 +721,30 @@ class Game {
     }
 
     playRound() {
-        this.deck.dealCards(this.players);
-        this.addHandsToHTML();
-        this.setOptions(this.players[0], { envido: true, truco: true, irseAlMaso: true });
-        this.parseOptions()
-        this.players[0].useCard(1);
-        setTimeout(() => {
-            this.players[0].updateHand();
-        }, 2000);
+        // this.deck.dealCards(this.players);
+        // this.addHandsToHTML();
+        socket.emit('get-hand', hand => {
+            console.log('Hand I get from server: ', hand);
+            for (let card of hand) {
+                console.log('This should be an individual card: ', card);
+                this.player.cards.push(new Card(card.number, card.suit));
+            }
+            this.player.updateHand();
+        });
+
+        for (let player of this.otherPlayers) {
+            let numberOfCards = 3;
+            for (let i = 0; i < numberOfCards; i++) {
+                player.cards.push(new CardBackside());
+            }
+            player.updateHand();
+        }
+        this.setOptions(this.player, { envido: true, truco: true, irseAlMaso: true });
+        // this.parseOptions()
+        // this.players[0].useCard(1);
+        // setTimeout(() => {
+        //     this.players[0].updateHand();
+        // }, 2000);
     }
 
     start() {
