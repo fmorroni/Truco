@@ -161,9 +161,26 @@ fieldset fieldset:first-of-type {
 }
 
 .local-player.team-0 {
+    position: relative;
+}
+
+.local-player.team-0::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    top: -.3rem;
+    left: -.5rem;
+    height: 50%;
     border: solid hsl(218deg 17% 30%);
     border-radius: .6rem;
     padding: .3rem;
+    animation: blinker 2s linear infinite;
+}
+
+@keyframes blinker {
+    50% {
+      opacity: 0;
+    }
 }
 
 .local-player:hover {
