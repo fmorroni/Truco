@@ -94,7 +94,13 @@ io.on('connection', (socket) => {
             io.counterId = setInterval(() => {
                 if (delaySeconds <= 0) {
                     console.log('timer ended');
-                    io.to(currentRoom.gameRoom).emit('start-game', currentRoom.teams);
+                    let playingOrder = [];
+                    for (let i = 0; i < currentRoom.teams['team_1'].length; ++i) {
+                        for (let teamKey of Object.keys(currentRoom.teams)) {
+                            playingOrder.push(currentRoom.teams[teamKey][i]);
+                        }
+                    }
+                    io.to(currentRoom.gameRoom).emit('start-game', currentRoom.connectedPlayers, playingOrder);
                     currentRoom.deck = new Deck();
                     clearInterval(io.counterId);
                 } else {
@@ -112,6 +118,7 @@ io.on('connection', (socket) => {
 
     socket.on('get-hand', callback => {
         let hand = gameRooms[socket.room].deck.dealHand();
+        socket.hand = hand; // To verify consistency with client.
         console.log(`Hand for ${socket.username}`, hand);
         callback(hand);
     });

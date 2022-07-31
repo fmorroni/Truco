@@ -19,6 +19,36 @@ function getGameInfo(url) {
     return gameInfo;
 }
 
+function getCssRuleBySelectorRegex(cssRuleList, regexSelector) {
+    let matchedRules = [];
+    for (let rule of cssRuleList) {
+        if (regexSelector.test(rule.selectorText)) {
+            matchedRules.push(rule);
+        }
+    }
+    return matchedRules;
+}
+
+function getCssRuleBySelectorExact(cssRuleList, stringSelector) {
+    let matchedRules = [];
+    for (let rule of cssRuleList) {
+        if (stringSelector === rule.selectorText) {
+            matchedRules.push(rule);
+        }
+    }
+    return matchedRules;
+}
+
+function getCssRuleIndexBySelector(cssRuleList, stringSelectorExactMatch) {
+    let matchedIndexes = [];
+    for (let i = 0; i < cssRuleList.length; ++i) {
+        if (stringSelectorExactMatch === cssRuleList[i].selectorText) {
+            matchedIndexes.push(i);
+        }
+    }
+    return matchedIndexes;
+}
+
 // Esto sería necesario si tuviera descargada la socket.io-client library, pero como usé el cnd
 // no necesito importar el módulo.
 // import { io } from '/socket.io-client';
@@ -128,14 +158,16 @@ window.addEventListener('load', () => {
         
     });
     
-    socket.on('start-game', (teams) => {
+    socket.on('start-game', (connectedPlayers, playingOrder) => {
         removeAllChildNodes(document.body);
-        gameInfo.teams = teams;
+        gameInfo.connectedPlayers = connectedPlayers;
+        gameInfo.playingOrder = playingOrder;
+        console.log(gameInfo);
         const game = new Game(gameInfo);
         console.log('Local player: ', game.player);
         console.log('Remote players: ', game.otherPlayers);
         game.start();
-        console.log(gameInfo);
+        // game.player.useCard(1);
     })
     
     
@@ -319,29 +351,30 @@ class Card {
 }
 
 class Player {
-    constructor(/* id,  */username/*, team=null */) {
-        // this.id = id;
+    constructor(username, team, isLocal=false) {
         this.username = username;
-        // this.team = team;
-        this.cards = [];
+        this.team = team;
+        this.isLocal = isLocal;
+        this.cardsInHand = [];
+        this.usedCards = [];
         this.totalPoints = 0;
         this.roundPoints = 0;
         this.tieneElQuiero = false;
         this.optionsNode = this.createOptionsNode();
-        this.handNode = this.createHandNode();
+        [this.handNode, this.usedCardsNode] = this.createHandAndUsedCardsNodes();
         this.playerContainerNode = this.createPlayerContainerNode();
     }
 
     get envido() {
         let envido = 0;
-        for (let i = 0; i < this.cards.length - 1; i++) {
-            for (let j = i + 1; j < this.cards.length; j++) {
+        for (let i = 0; i < this.cardsInHand.length - 1; i++) {
+            for (let j = i + 1; j < this.cardsInHand.length; j++) {
                 let newEnvido = 0;
-                if (this.cards[i].suit === this.cards[j].suit) {
-                    newEnvido = this.cards[i].valueEnvido + this.cards[j].valueEnvido + 20;
+                if (this.cardsInHand[i].suit === this.cardsInHand[j].suit) {
+                    newEnvido = this.cardsInHand[i].valueEnvido + this.cardsInHand[j].valueEnvido + 20;
                 }
                 else {
-                    for (const card of this.cards) {
+                    for (const card of this.cardsInHand) {
                         newEnvido = (card.valueEnvido > newEnvido ? card.valueEnvido : newEnvido)
                     }
                 }
@@ -358,33 +391,117 @@ class Player {
         playerContainer.classList.add('player-container');
 
         let username = document.createElement('h3');
-        username.classList.add('username');
+        username.classList.add('username', 'team-' + this.team);
         username.textContent = this.username;
         playerContainer.appendChild(username);
-        playerContainer.appendChild(this.handNode);
-        playerContainer.appendChild(this.optionsNode);
+
+        let handOptionsContainer = document.createElement('div');
+        handOptionsContainer.classList.add('hand-options-container');
+        handOptionsContainer.appendChild(this.handNode);
+        handOptionsContainer.appendChild(this.optionsNode);
+        playerContainer.appendChild(handOptionsContainer);
+
+        playerContainer.appendChild(this.usedCardsNode);
 
         return playerContainer;
     }
 
-    createHandNode() {
-        let hand = document.createElement('div');
-        hand.classList.add('hand');
+    createHandAndUsedCardsNodes() {
+        // This are hardcoded cause getting them dynamically was a pain
+        // because apparently the image doesn't load fast enough.
+        let naturalWidth = 360;
+        let naturalHeight = 515;
+        let rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+        let width = parseFloat(getCssRuleBySelectorRegex(document.styleSheets[0].cssRules, /\.card-local/)[0].style.width)*rem;
+        let height = naturalHeight*width/naturalWidth;
+        
+        let handCssClass = getCssRuleBySelectorExact(document.styleSheets[0].cssRules, '.hand')[0];
+        if (!handCssClass) {
+            let index = document.styleSheets[0].insertRule('.hand {}', document.styleSheets[0].cssRules.length);
+            handCssClass = document.styleSheets[0].cssRules[index];
+        }
+        handCssClass.style.width = width*2.3 + 'px';
+        handCssClass.style.height = height*1.05 + 'px';
 
-        return hand;
+        let usedCardsCssClass = getCssRuleBySelectorExact(document.styleSheets[0].cssRules, '.used-cards')[0];
+        if (!usedCardsCssClass) {
+            let index = document.styleSheets[0].insertRule('.used-cards {}', document.styleSheets[0].cssRules.length);
+            usedCardsCssClass = document.styleSheets[0].cssRules[index];
+        }
+        usedCardsCssClass.style.width = handCssClass.style.width;
+        usedCardsCssClass.style.height = handCssClass.style.height;
+        
+        let handNode = document.createElement('div');
+        handNode.classList.add('hand');
+        let usedCardsNode = document.createElement('div');
+        usedCardsNode.classList.add('used-cards');
+
+        return [handNode, usedCardsNode];
     }
 
     createOptionsNode() {
         let optionsNode = document.createElement('div');
         optionsNode.classList.add('options');
-
+        
         return optionsNode;
     }
 
     updateHand() {
-        removeAllChildNodes(this.handNode);
-        for (let card of this.cards) {
-            this.handNode.appendChild(card.node);
+        this.updateHandOrUsedCards('hand');
+    }
+
+    updateUsedCards() {
+        this.updateHandOrUsedCards('usedCards');
+    }
+
+    updateHandOrUsedCards(handOrUsedCards) {
+        let node; let cards; let cardClassEnding; let maxAngle;
+        if (handOrUsedCards === 'hand') {
+            node = this.handNode;
+            cards = this.cardsInHand;
+            cardClassEnding = 'in-hand';
+            maxAngle = (cards.length > 1) ? 30 : 0;
+        } else if (/used/i.test(handOrUsedCards)) {
+            node = this.usedCardsNode;
+            cards = this.usedCards;
+            cardClassEnding = 'used';
+            maxAngle = (cards.length > 1) ? 12 : 0;
+        }
+        let angleBetweenCards = (cards.length > 1) ? 2*maxAngle/(cards.length - 1) : 0;
+        for (let [i, card] of cards.entries()) {
+            let cardClass = `${this.username}-card-${i}-${cardClassEnding}`;
+            let angle = -maxAngle + angleBetweenCards*i;
+            let radius = '40%';
+            let rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+            let width = parseFloat(getCssRuleBySelectorRegex(document.styleSheets[0].cssRules, /\.card-local/)[0].style.width)*rem;
+            let rule = `.${cardClass} {
+                            position: absolute;
+                            left: ${(node.clientWidth - width)/2}px;
+                            top: ${radius};
+                            transform: rotate(${angle}deg) translateY(-${radius});
+                        }`;
+            let indexIfRuleAlreadyExisted = getCssRuleIndexBySelector(document.styleSheets[0].cssRules, '.' + cardClass)[0];
+            if (indexIfRuleAlreadyExisted) {
+                document.styleSheets[0].deleteRule(indexIfRuleAlreadyExisted);
+            }
+            document.styleSheets[0].insertRule(rule, document.styleSheets[0].cssRules.length);
+            
+            if (this.isLocal) {
+                let ruleOnHover = `.${cardClass}:hover {
+                    transform: rotate(${angle}deg) translateY(-${radius}) scale(1.1);
+                    z-index: 1;
+                }`;
+                indexIfRuleAlreadyExisted = getCssRuleIndexBySelector(document.styleSheets[0].cssRules, `.${cardClass}:hover`)[0];
+                if (indexIfRuleAlreadyExisted) {
+                    document.styleSheets[0].deleteRule(indexIfRuleAlreadyExisted);
+                }
+                document.styleSheets[0].insertRule(ruleOnHover, document.styleSheets[0].cssRules.length);
+            }
+
+            // Remove any other class that may have been added in other updates.
+            card.node.className = 'card-local';
+            card.node.classList.add(cardClass);
+            node.appendChild(card.node);
         }
     }
 
@@ -422,7 +539,27 @@ class Player {
     } */
 
     useCard(cardIndex) {
-        return this.cards.splice(cardIndex, 1)[0];
+        let usedCard = this.cardsInHand.splice(cardIndex, 1)[0];
+        
+        // Cloning removes event listeners.
+        usedCard.node.remove();
+        usedCard.node = usedCard.node.cloneNode();
+        
+        this.usedCards.push(usedCard);
+        this.updateHand();
+        this.updateUsedCards();
+        return usedCard;
+    }
+
+    addUseCardEventListener() {
+        for (let card of this.cardsInHand) {
+            // card.addEventListener('click', this.useCard) // Wouldn't work because of the this parameter.
+            card.node.addEventListener('click', () => {
+                // Note: I had used a [i, card] .entries() forof before, but that added a fixed index as per
+                // the original card order to the listener, which broke if I used cards in a random order.
+                this.useCard(this.cardsInHand.indexOf(card));
+            })
+        }
     }
 }
 
@@ -442,7 +579,7 @@ class Game {
 
     constructor(gameInfo) {
         this.gameInfo = gameInfo;
-        this.player = new Player(gameInfo.username);
+        this.player = new Player(gameInfo.username, /*team=*/gameInfo.connectedPlayers[gameInfo.username], /*isLocal=*/true);
         // this.teams = this.generateTeams();
         this.otherPlayers = this.generateOtherPlayers();
         // this.deck = new Deck();
@@ -470,7 +607,7 @@ class Game {
         let otherPlayers = [];
         for (let username of Object.keys(this.gameInfo.connectedPlayers)) {
             if (username !== this.player.username) {
-                otherPlayers.push(new Player(username));
+                otherPlayers.push(new Player(username, /*team=*/this.gameInfo.connectedPlayers[username]));
             }
         }
         return otherPlayers;
@@ -479,16 +616,24 @@ class Game {
     addPlayerContainersToHTML() {
         let container = document.createElement('div');
         container.classList.add('container');
-        let separator = document.createElement('div');
-        separator.classList.add('separator');
 
-        container.appendChild(this.player.playerContainerNode);
-        for (let player of this.otherPlayers) {
-            container.appendChild(player.playerContainerNode);
+        let numberOfRows = 2;
+        let playersPerRow = Math.ceil(this.gameInfo.playersRequired/numberOfRows);
+        for (let i = 0; i < numberOfRows; ++i) {
+            let row = document.createElement('div');
+            let limit = playersPerRow*(i+1) <= this.gameInfo.playersRequired ?
+                                               playersPerRow*(i+1) :
+                                               this.gameInfo.playersRequired;
+            for (let j = i*playersPerRow; j < limit; ++j) {
+                let player = this.getPlayerByUsername(this.gameInfo.playingOrder[j]);
+                row.appendChild(player.playerContainerNode);
+            }
+            container.appendChild(row);
         }
-        // for (let i = 0; i < this.otherPlayers.length; i++) {
-        //     container.appendChild(this.players[i].playerContainerNode);
-        //     if (i < this.players.length - 1) container.appendChild(separator);
+
+        // container.appendChild(this.player.playerContainerNode);
+        // for (let player of this.otherPlayers) {
+        //     container.appendChild(player.playerContainerNode);
         // }
 
         document.body.appendChild(container);
@@ -498,6 +643,18 @@ class Game {
         this.player.updateHand();
         for (let player of this.otherPlayers) {
             player.updateHand();
+        }
+    }
+
+    getPlayerByUsername(username) {
+        if (username === this.player.username) {
+            return this.player;
+        } else {
+            for (let player of this.otherPlayers) {
+                if (username === player.username) {
+                    return player;
+                }
+            }
         }
     }
 
@@ -724,18 +881,17 @@ class Game {
         // this.deck.dealCards(this.players);
         // this.addHandsToHTML();
         socket.emit('get-hand', hand => {
-            console.log('Hand I get from server: ', hand);
             for (let card of hand) {
-                console.log('This should be an individual card: ', card);
-                this.player.cards.push(new Card(card.number, card.suit));
+                this.player.cardsInHand.push(new Card(card.number, card.suit));
             }
             this.player.updateHand();
+            this.player.addUseCardEventListener();
         });
 
         for (let player of this.otherPlayers) {
             let numberOfCards = 3;
             for (let i = 0; i < numberOfCards; i++) {
-                player.cards.push(new CardBackside());
+                player.cardsInHand.push(new CardBackside());
             }
             player.updateHand();
         }

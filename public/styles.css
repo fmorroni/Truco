@@ -22,7 +22,7 @@ button {
     border-radius: 0 20%;
     background-color: #fff6c7;
     padding: .5rem;
-    margin-inline: .6rem;
+    margin: .6rem;
     font-size: .7rem;
 }
 
@@ -61,7 +61,7 @@ button:hover:not(:disabled) {
 }
 
 input[type="text"] {
-    font-size: .8rem;
+    font-size: .9rem;
     padding: .5rem;
 }
 
@@ -126,6 +126,7 @@ fieldset fieldset:first-of-type {
     border: solid black;
     padding: 1rem;
     font-size: .8rem;
+    user-select: none;
     /* min-height: 8rem; */
 }
 
@@ -201,32 +202,42 @@ fieldset fieldset:first-of-type {
 
 /*//////// GAME STYLING //////////*/
 .container {
-    margin-top: 5rem;
+    /* Changed from margin to padding because margin moved the whole body for some reason
+       and that added a scroll bar which I don't want. */
+    padding-top: 5rem;
     display: flex;
     justify-content: space-around;
 }
 
-.hand {
-    display: flex;
-    gap: 2rem;
-    margin-bottom: 2.5rem;
+.player-container {
+    margin-inline: 4rem;
+}
+
+.hand, .used-cards {
+    position: relative;
+    margin: 2.5rem 0;
 }
 
 .username {
     text-decoration: underline;
-    margin-bottom: 2rem;
 }
 
-.separator {
+.hand-options-container {
+    display: flex;
+}
+
+.options {
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+}
+
+/* .separator {
     height: inherit;
     width: 0.3rem;
     background-color: black;
-}
+} */
 
 .card-local, .card-remote {
     width: 10rem;
-}
-
-.card-local:hover {
-    transform: scale(1.07);
 }
